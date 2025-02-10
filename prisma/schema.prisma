@@ -1,0 +1,68 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("SESSION_DATABASE_URL")
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  ownerEmail  String
+  dateStart   DateTime
+  dateEnd     DateTime
+  accessToken String   @unique @default(uuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  slots Slot[]
+}
+
+model Slot {
+  id        String   @id @default(cuid())
+  startTime DateTime
+  endTime   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  eventId     String
+  event       Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  slotsPeople SlotsPeople[]
+
+  @@unique([startTime, endTime, eventId])
+}
+
+model People {
+  id        String   @id @default(cuid())
+  eventId   String
+  name      String
+  email     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  slotsPeople SlotsPeople[]
+}
+
+model SlotsPeople {
+  id        String   @id @default(cuid())
+  slotId    String
+  peopleId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  slot   Slot   @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  people People @relation(fields: [peopleId], references: [id], onDelete: Cascade)
+}
