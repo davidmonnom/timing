@@ -1,8 +1,18 @@
-import { Event, Slot } from "@prisma/client";
+import { Event, Slot, SlotsPeople } from "@prisma/client";
 import { DateTime } from "luxon";
 
+export type SlotsPeopleData = SlotsPeople & {
+  people: {
+    name: string;
+  };
+};
+
+export type SlotData = Slot & {
+  slotsPeople: SlotsPeopleData[];
+};
+
 export type EventData = Event & {
-  slots: Slot[];
+  slots: SlotData[];
 };
 
 export type TimeSlot = {

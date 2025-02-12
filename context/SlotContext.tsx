@@ -8,18 +8,23 @@ import { useParams, usePathname } from "next/navigation";
 import checkSlotSuperposition from "@/lib/checkSlotSuperposition";
 import getEvent from "@/server/getEvent";
 import saveSlots from "@/server/saveSlot";
-import { removeSlot } from "@/server/removeSlot";
-import useItemSizing from "@/hooks/useItemSizing";
+import removeSlot from "@/server/removeSlot";
+import addPeopleToSlot from "@/server/addPeopleToSlot";
+import { Slot } from "@prisma/client";
+import getEventSlots from "@/server/getEventSlots";
 
 type SlotContextType = {
+  name: string;
+  lockName: boolean;
   event: EventData | null;
   mode: "use" | "edit";
   loading: boolean;
-  nbrVisibleSlots: number;
-  nbrDays: number;
+  setName: (name: string) => void;
+  validateName: () => void;
   deleteSlot: (slotId: string) => Promise<boolean>;
   updateSlot: (slots: null | TimeSlot[]) => Promise<boolean>;
   fetchEvent: (uuid: string) => Promise<boolean>;
+  subscribeToSlot: (slot: Slot) => Promise<boolean>;
 };
 
 export const SlotContext = createContext({} as SlotContextType);
@@ -32,16 +37,18 @@ export const SlotContextWrapper = ({ children }: SlotContextWrapper) => {
   const [loading, setLoading] = useState(true);
   const [event, setEvent] = useState<EventData | null>(null);
   const [mode, setMode] = useState<"use" | "edit">("use");
+  const [name, setName] = useState<string>("");
+  const [lockName, setLockName] = useState<boolean>(false);
   const notifications = useNotifications();
   const locale = useLocale();
   const params = useParams();
   const path = usePathname();
-  const { nbrDays, nbrVisibleSlots } = useItemSizing(event);
 
   const fetchEvent = useCallback(async (uuid: string) => {
     try {
       const result = await getEvent(uuid as string);
 
+      console.log(result);
       if (!result.status || !result.data) {
         throw new Error("Error while fetching the event");
       }
@@ -109,7 +116,6 @@ export const SlotContextWrapper = ({ children }: SlotContextWrapper) => {
     }
 
     try {
-      setLoading(true);
       await removeSlot(slotId);
       await fetchEvent(event.accessToken);
 
@@ -118,7 +124,6 @@ export const SlotContextWrapper = ({ children }: SlotContextWrapper) => {
         autoHideDuration: 3000,
       });
     } catch {
-      debugger;
       notifications.show("Error while deleting the slot", {
         severity: "error",
         autoHideDuration: 3000,
@@ -126,9 +131,59 @@ export const SlotContextWrapper = ({ children }: SlotContextWrapper) => {
 
       return false;
     } finally {
-      setLoading(false);
       return true;
     }
+  };
+
+  const subscribeToSlot = async (slot: Slot) => {
+    try {
+      const result = await addPeopleToSlot({
+        slotId: slot.id,
+        eventId: event?.id as string,
+        name: name,
+      });
+
+      if (result.status) {
+        await refreshSlots();
+        notifications.show("Subscribed to the slot", {
+          severity: "success",
+          autoHideDuration: 3000,
+        });
+        return true;
+      }
+
+      throw new Error("Error while subscribing to the slot");
+    } catch {
+      notifications.show("Error while subscribing to the slot", {
+        severity: "error",
+        autoHideDuration: 3000,
+      });
+
+      return false;
+    }
+  };
+
+  const refreshSlots = async () => {
+    if (!event) {
+      return false;
+    }
+
+    try {
+      const slots = await getEventSlots(event?.id as string);
+
+      if (slots && slots.status && slots.data) {
+        setEvent((prev) =>
+          prev ? { ...prev, slots: slots.data ?? [] } : prev
+        );
+      }
+    } catch {
+      console.warn("Error while refreshing slots");
+    }
+  };
+
+  const validateName = () => {
+    localStorage.setItem("name", name);
+    setLockName(true);
   };
 
   useEffect(() => {
@@ -154,17 +209,29 @@ export const SlotContextWrapper = ({ children }: SlotContextWrapper) => {
     }
   }, [path]);
 
+  useEffect(() => {
+    const storedName = localStorage.getItem("name");
+
+    if (storedName) {
+      setName(storedName);
+      setLockName(true);
+    }
+  }, []);
+
   return (
     <SlotContext.Provider
       value={{
+        name,
+        lockName,
         mode,
         event,
         loading,
+        setName,
         deleteSlot,
         updateSlot,
         fetchEvent,
-        nbrVisibleSlots,
-        nbrDays,
+        subscribeToSlot,
+        validateName,
       }}
     >
       {children}

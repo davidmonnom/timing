@@ -2,13 +2,12 @@
 
 import { Stack, Typography } from "@mui/material";
 import { useContext } from "react";
-import { EventData } from "@/app/types";
+import { EventData, SlotData } from "@/app/types";
 import { DateTime } from "luxon";
 import getDateSlots from "@/lib/getDateSlot";
 import SlotDialog from "./SlotDialog";
 import SlotItem from "./SlotItem";
 import { SlotContext } from "@/context/SlotContext";
-import { Slot } from "@prisma/client";
 
 type SlotEditorProps = {
   event: EventData;
@@ -37,8 +36,8 @@ export default function SlotEditor({
           : "Edit slots"}
       </SlotDialog>
 
-      {getDateSlots(index, offset, event).map((slot: Slot) => (
-        <SlotItem key={slot.id} slot={slot} onDelete={context.deleteSlot} />
+      {getDateSlots(index, offset, event).map((slot: SlotData) => (
+        <SlotItem key={slot.id} slot={slot} />
       ))}
       {getDateSlots(index, offset, event).length === 0 && (
         <Stack

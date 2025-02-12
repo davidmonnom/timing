@@ -1,30 +1,28 @@
 "use server";
 
-import { EventData } from "@/app/types";
+import { SlotData } from "@/app/types";
 import { prisma } from "@/lib/prisma";
 
-type EventReturnType = {
+type SlotsReturnType = {
   status: boolean;
-  data?: EventData;
+  data?: SlotData[];
   error?: unknown;
 };
 
-export default async function getEvent(uuid: string): Promise<EventReturnType> {
+export default async function getEventSlots(
+  eventId: string
+): Promise<SlotsReturnType> {
   try {
-    const result = await prisma.event.findUnique({
+    const result = await prisma.slot.findMany({
       where: {
-        accessToken: uuid,
+        eventId: eventId,
       },
       include: {
-        slots: {
+        slotsPeople: {
           include: {
-            slotsPeople: {
-              include: {
-                people: {
-                  select: {
-                    name: true,
-                  },
-                },
+            people: {
+              select: {
+                name: true,
               },
             },
           },
