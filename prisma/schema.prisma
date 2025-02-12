@@ -21,8 +21,6 @@ model Event {
   dateStart   DateTime
   dateEnd     DateTime
   accessToken String   @unique @default(uuid())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 
   // Relations
   slots Slot[]
@@ -32,8 +30,6 @@ model Slot {
   id        String   @id @default(cuid())
   startTime DateTime
   endTime   DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   // Relations
   eventId     String
@@ -44,25 +40,24 @@ model Slot {
 }
 
 model People {
-  id        String   @id @default(cuid())
-  eventId   String
-  name      String
-  email     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id      String @id @default(cuid())
+  eventId String
+  name    String
 
   // Relations
   slotsPeople SlotsPeople[]
+
+  @@unique([name, eventId])
 }
 
 model SlotsPeople {
-  id        String   @id @default(cuid())
-  slotId    String
-  peopleId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id       String @id @default(cuid())
+  slotId   String
+  peopleId String
 
   // Relations
   slot   Slot   @relation(fields: [slotId], references: [id], onDelete: Cascade)
   people People @relation(fields: [peopleId], references: [id], onDelete: Cascade)
+
+  @@unique([slotId, peopleId])
 }

@@ -52,7 +52,7 @@ export default function JoinDialog({ children }: JoinDialogProps) {
       >
         {children}
       </Button>
-      <Dialog open={open} onClose={() => setOpen(false)}>
+      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="lg">
         <DialogTitle>
           <Typography>Join a slot 🫢</Typography>
         </DialogTitle>

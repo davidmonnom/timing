@@ -8,7 +8,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { EventData } from "@/app/types";
 import { DateTime } from "luxon";
 import SlotHeader from "./SlotHeader";
@@ -18,9 +18,8 @@ import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import CheckIcon from "@mui/icons-material/Check";
 import UserEditor from "../user/UserEditor";
-import {
+import useItemSizing, {
   ITEM_CONTAINER_SPACING_PX,
-  ITEM_WIDTH_PX,
 } from "@/hooks/useItemSizing";
 
 type SlotPaginationProps = {
@@ -29,13 +28,11 @@ type SlotPaginationProps = {
 
 export default function SlotPagination({ event }: SlotPaginationProps) {
   const context = useContext(SlotContext);
-  const nbrVisibleSlots = context.nbrVisibleSlots;
   const [page, setPage] = useState<number>(0);
-  const [name, setName] = useState<string>("");
-  const [lockName, setLockName] = useState<boolean>(false);
+  const { nbrDays, nbrVisibleSlots, itemWidth } = useItemSizing(event);
 
   const changePage = (newPage: number) => {
-    if (newPage < 0 || newPage * context.nbrVisibleSlots > context.nbrDays) {
+    if (newPage < 0 || newPage * nbrVisibleSlots > nbrDays) {
       return;
     }
 
@@ -52,20 +49,6 @@ export default function SlotPagination({ event }: SlotPaginationProps) {
     return items;
   };
 
-  const validateName = () => {
-    localStorage.setItem("name", name);
-    setLockName(true);
-  };
-
-  useEffect(() => {
-    const storedName = localStorage.getItem("name");
-
-    if (storedName) {
-      setName(storedName);
-      setLockName(true);
-    }
-  }, []);
-
   return (
     <Stack
       margin={"20px"}
@@ -73,7 +56,13 @@ export default function SlotPagination({ event }: SlotPaginationProps) {
       alignItems={"center"}
       spacing={2}
     >
-      <Stack direction={"row"} spacing={1}>
+      <Stack
+        direction={"row"}
+        spacing={1}
+        width={"100%"}
+        justifyContent={"center"}
+        id="slot-container"
+      >
         <Box
           border={"1px solid"}
           borderColor={"primary.light"}
@@ -84,7 +73,7 @@ export default function SlotPagination({ event }: SlotPaginationProps) {
           alignItems={"center"}
           justifyContent={"center"}
         >
-          <Typography fontSize={"small"} fontWeight={"bold"}>
+          <Typography fontSize={"small"} fontWeight={"bold"} noWrap>
             {event.slots.length} slots
           </Typography>
         </Box>
@@ -103,10 +92,7 @@ export default function SlotPagination({ event }: SlotPaginationProps) {
           size="small"
           color="primary"
           style={{ padding: "5px", minWidth: "0" }}
-          disabled={
-            page * context.nbrVisibleSlots + context.nbrVisibleSlots >=
-            context.nbrDays
-          }
+          disabled={page * nbrVisibleSlots + nbrVisibleSlots >= nbrDays}
           onClick={() => changePage(page + 1)}
         >
           <KeyboardArrowRightIcon />
@@ -116,9 +102,9 @@ export default function SlotPagination({ event }: SlotPaginationProps) {
             <TextField
               placeholder="Who are you?"
               size="small"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              disabled={lockName}
+              value={context.name}
+              onChange={(e) => context.setName(e.target.value)}
+              disabled={context.lockName}
               slotProps={{
                 input: {
                   startAdornment: (
@@ -132,8 +118,8 @@ export default function SlotPagination({ event }: SlotPaginationProps) {
               size="small"
               color="primary"
               style={{ padding: "5px", minWidth: "0" }}
-              disabled={name.length === 0 || lockName}
-              onClick={validateName}
+              disabled={context.name.length === 0 || context.lockName}
+              onClick={context.validateName}
             >
               <CheckIcon />
             </Button>
@@ -148,7 +134,7 @@ export default function SlotPagination({ event }: SlotPaginationProps) {
           });
 
           return (
-            <Stack key={index} width={`${ITEM_WIDTH_PX}px`}>
+            <Stack key={index} width={`${itemWidth}px`}>
               <SlotHeader date={date} />
               {context.mode === "edit" ? (
                 <SlotEditor

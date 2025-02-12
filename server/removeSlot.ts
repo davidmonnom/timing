@@ -7,7 +7,7 @@ type SlotReturnType = {
   error?: unknown;
 };
 
-export async function removeSlot(slotId: string): Promise<SlotReturnType> {
+export default async function removeSlot(slotId: string): Promise<SlotReturnType> {
   try {
     await prisma.slot.delete({
       where: {

@@ -1,11 +1,6 @@
-"use client";
-
 import { Stack, Typography } from "@mui/material";
-import { useContext } from "react";
-import { EventData } from "@/app/types";
+import { EventData, SlotData } from "@/app/types";
 import getDateSlots from "@/lib/getDateSlot";
-import { SlotContext } from "@/context/SlotContext";
-import { Slot } from "@prisma/client";
 import SlotItem from "../slot/SlotItem";
 
 type UserEditorProps = {
@@ -15,12 +10,10 @@ type UserEditorProps = {
 };
 
 export default function UserEditor({ event, index, offset }: UserEditorProps) {
-  const context = useContext(SlotContext);
-
   return (
     <Stack mt={"15px"} justifyContent={"center"} spacing={1}>
-      {getDateSlots(index, offset, event).map((slot: Slot) => (
-        <SlotItem key={slot.id} slot={slot} onDelete={context.deleteSlot} />
+      {getDateSlots(index, offset, event).map((slot: SlotData) => (
+        <SlotItem key={slot.id} slot={slot} />
       ))}
       {getDateSlots(index, offset, event).length === 0 && (
         <Stack

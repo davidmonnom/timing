@@ -99,7 +99,7 @@ export default function SlotDialog({
       <Button variant="outlined" size="small" onClick={() => setOpen(true)}>
         {children}
       </Button>
-      <Dialog open={open} onClose={cancel}>
+      <Dialog open={open} onClose={cancel} maxWidth="lg">
         <DialogTitle>
           <Typography>Add slot for {date.toLocaleString()}</Typography>
         </DialogTitle>
